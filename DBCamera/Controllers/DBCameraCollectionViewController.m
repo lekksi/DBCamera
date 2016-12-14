@@ -90,6 +90,8 @@
 
 - (void) collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
+    ALAsset *asset = _items[indexPath.item];
+
     [_collectionControllerDelegate collectionView:collectionView itemURL:(NSURL *)[[asset defaultRepresentation] url]];
 }
 
