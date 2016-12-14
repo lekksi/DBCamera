@@ -71,11 +71,11 @@
     [item.itemImage setImage:nil];
     
     if ( _items.count > 0) {
-        __weak DBCollectionViewCell *blockItem = item;
-        [[[DBLibraryManager sharedInstance] defaultAssetsLibrary] assetForURL:(NSURL *)_items[indexPath.item]  resultBlock:^(ALAsset *asset) {
-            UIImage *image = [UIImage imageWithCGImage:[asset thumbnail]];
-            [blockItem.itemImage setImage:image];
-        } failureBlock:nil];
+        ALAsset *asset = _items[indexPath.item];
+        CGImageRef thumbnailImageRef = [asset thumbnail];
+        UIImage *thumbnail = [UIImage imageWithCGImage:thumbnailImageRef];
+
+        item.itemImage.image = thumbnail;
     }
     
     return item;
@@ -90,7 +90,7 @@
 
 - (void) collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    [_collectionControllerDelegate collectionView:collectionView itemURL:(NSURL *)_items[indexPath.item]];
+    [_collectionControllerDelegate collectionView:collectionView itemURL:(NSURL *)[[asset defaultRepresentation] url]];
 }
 
 @end
