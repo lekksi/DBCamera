@@ -83,6 +83,10 @@
     __block GroupsCompletionBlock block = _groupsCompletionBlock;
     
     ALAssetsLibraryGroupsEnumerationResultsBlock groupsEnumerator = ^(ALAssetsGroup *group, BOOL *stop){
+        ALAssetsFilter *onlyPhotosFilter = [ALAssetsFilter allPhotos];
+
+        [group setAssetsFilter:onlyPhotosFilter];
+
         if ( group ) {
             if ( group.numberOfAssets > 0 ) {
                 [weakSelf setUsedGroup:group];
@@ -111,12 +115,9 @@
     
     ALAssetsGroupEnumerationResultsBlock assetsEnumerator = ^(ALAsset *result, NSUInteger index, BOOL *stop) {
         if ( result ) {
-            if( [[result valueForProperty:ALAssetPropertyType] isEqualToString:ALAssetTypePhoto] ) {
-                if ( [result defaultRepresentation] ) {
-                    [items addObject:[[result defaultRepresentation] url]];
-                    assetResult = result;
-                }
-            }
+            [items addObject:result];
+
+            assetResult = result;
         } else {
             *stop = YES;
             
