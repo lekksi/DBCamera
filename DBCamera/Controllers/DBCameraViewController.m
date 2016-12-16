@@ -15,6 +15,7 @@
 #import "DBCameraLibraryViewController.h"
 #import "DBLibraryManager.h"
 #import "DBMotionManager.h"
+#import "DBCameraConfiguration.h"
 
 #import "UIImage+Crop.h"
 #import "DBCameraMacros.h"
@@ -111,6 +112,10 @@
         [(DBCameraView *)camera cameraButton].enabled = [self.cameraManager hasMultipleCameras];
         [self.cameraManager hasMultipleCameras];
     }
+    
+    if ( self.cameraConfiguration.configureCameraController ) {
+        self.cameraConfiguration.configureCameraController(self);
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -128,8 +133,12 @@
 - (void) viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
-    if ( !self.customCamera )
+    if ( self.customCamera == nil ) {
         [self checkForLibraryImage];
+    } else {
+        DBCameraView *cameraView = (DBCameraView *)self.customCamera;
+        [cameraView updateFrame:self.view.frame];
+    }
 }
 
 - (void) viewWillDisappear:(BOOL)animated
@@ -326,6 +335,7 @@
         [segue enableGestures:YES];
         [segue setDelegate:self.delegate];
         [segue setCapturedImageMetadata:finalMetadata];
+        [segue setCameraConfiguration:self.cameraConfiguration];
         [segue setCameraSegueConfigureBlock:self.cameraSegueConfigureBlock];
 
         [self.navigationController pushViewController:segue animated:YES];
@@ -365,6 +375,7 @@
             [library setUseCameraSegue:self.useCameraSegue];
             [library setCameraSegueConfigureBlock:self.cameraSegueConfigureBlock];
             [library setLibraryMaxImageSize:self.libraryMaxImageSize];
+            [library setCameraConfiguration:self.cameraConfiguration];
             [self.containerDelegate switchFromController:self toController:library];
         }];
     } else {
@@ -445,6 +456,18 @@
     id modalViewController = self.presentingViewController;
     if ( modalViewController )
         [self dismissCamera];
+}
+
+#pragma mark - DBCameraControllerProtocol
+
+- (void) setInitialCameraPosition:(AVCaptureDevicePosition)initialCameraPosition {
+    
+    if ( initialCameraPosition == self.cameraManager.cameraPosition || initialCameraPosition == AVCaptureDevicePositionUnspecified) {
+        return;
+    }
+    
+    [self switchCamera];
+    
 }
 
 @end

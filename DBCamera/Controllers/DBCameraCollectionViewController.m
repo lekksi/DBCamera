@@ -71,11 +71,12 @@
     [item.itemImage setImage:nil];
     
     if ( _items.count > 0) {
-        ALAsset *asset = _items[indexPath.item];
-        CGImageRef thumbnailImageRef = [asset thumbnail];
-        UIImage *thumbnail = [UIImage imageWithCGImage:thumbnailImageRef];
-
-        item.itemImage.image = thumbnail;
+        __weak DBCollectionViewCell *blockItem = item;
+        
+        [[[DBLibraryManager sharedInstance] defaultAssetsLibrary] assetForURL:(NSURL *)_items[indexPath.item]  resultBlock:^(ALAsset *asset) {
+            UIImage *image = [UIImage imageWithCGImage:[asset aspectRatioThumbnail]];
+            [blockItem.itemImage setImage:image];
+        } failureBlock:nil];
     }
     
     return item;
