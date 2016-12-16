@@ -55,10 +55,17 @@
     _getAllAssets = NO;
     _lastItemCompletionBlock = blockhandler;
     __weak LastItemCompletionBlock block = _lastItemCompletionBlock;
-    [[self defaultAssetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos usingBlock:self.assetGroupEnumerator
-                                             failureBlock:^(NSError *error) {
-                                                 block( NO, nil );
-                                             }];
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        [[self defaultAssetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos
+                                                   usingBlock:self.assetGroupEnumerator
+                                                 failureBlock:^(NSError *error) {
+                                                     dispatch_async(dispatch_get_main_queue(), ^{
+                                                         block( NO, nil );
+                                                     });
+                                                 }];
+    });
+    
 }
 
 - (void) loadGroupsAssetWithBlock:(GroupsCompletionBlock)blockhandler
@@ -66,10 +73,16 @@
     _getAllAssets = YES;
     _groupsCompletionBlock = blockhandler;
     __weak GroupsCompletionBlock block = _groupsCompletionBlock;
-    [[self defaultAssetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupAll usingBlock:self.assetGroupEnumerator
-                                             failureBlock:^(NSError *error) {
-                                                 block( NO, nil );
-                                             }];
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
+        [[self defaultAssetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupAll
+                                                   usingBlock:self.assetGroupEnumerator
+                                                 failureBlock:^(NSError *error) {
+                                                     dispatch_async(dispatch_get_main_queue(), ^{
+                                                         block( NO, nil );
+                                                     });
+                                                 }];
+    });
 }
 
 - (ALAssetsLibraryGroupsEnumerationResultsBlock) assetGroupEnumerator
@@ -82,25 +95,22 @@
     __weak typeof(self) weakSelf = self;
     __block GroupsCompletionBlock block = _groupsCompletionBlock;
     
-    ALAssetsLibraryGroupsEnumerationResultsBlock groupsEnumerator = ^(ALAssetsGroup *group, BOOL *stop){
-        ALAssetsFilter *onlyPhotosFilter = [ALAssetsFilter allPhotos];
-
-        [group setAssetsFilter:onlyPhotosFilter];
-
+    return ^(ALAssetsGroup *group, BOOL *stop) {
         if ( group ) {
+            ALAssetsFilter *onlyPhotosFilter = [ALAssetsFilter allPhotos];
+            [group setAssetsFilter:onlyPhotosFilter];
+            
             if ( group.numberOfAssets > 0 ) {
                 [weakSelf setUsedGroup:group];
-                [group enumerateAssetsUsingBlock:weakSelf.assetsEnumerator];
-            }
-        } else {
-            if ( blockGetAllAssets ) {
-                block ( YES, [groups copy] );
-                groups = nil;
+                
+                [group enumerateAssetsWithOptions:NSEnumerationReverse usingBlock:weakSelf.assetsEnumerator];
             }
         }
+        else if ( blockGetAllAssets ) {
+            block ( YES, [groups copy] );
+            groups = nil;
+        }
     };
-    
-    return groupsEnumerator;
 }
 
 - (ALAssetsGroupEnumerationResultsBlock) assetsEnumerator
@@ -113,12 +123,13 @@
     __weak NSMutableArray *assetGroupsBlock = _assetGroups;
     __weak LastItemCompletionBlock blockLastItem = _lastItemCompletionBlock;
     
-    ALAssetsGroupEnumerationResultsBlock assetsEnumerator = ^(ALAsset *result, NSUInteger index, BOOL *stop) {
-        if ( result ) {
+    return ^(ALAsset *result, NSUInteger index, BOOL *stop) {
+        if ( result && ((blockGetAllAssets && items.count < 600) || (!blockGetAllAssets && items.count < 1))) {
             [items addObject:result];
 
             assetResult = result;
-        } else {
+        }
+        else {
             *stop = YES;
             
             if ( !blockGetAllAssets ) {
@@ -128,7 +139,8 @@
                 dispatch_async(dispatch_get_main_queue(), ^{
                     blockLastItem( YES, image );
                 });
-            } else {
+            }
+            else {
                 NSString *groupPropertyName = (NSString *)[weakSelf.usedGroup valueForProperty:ALAssetsGroupPropertyName];
                 NSString *groupPropertyPersistentID = (NSString *)[weakSelf.usedGroup valueForProperty:ALAssetsGroupPropertyPersistentID];
                 NSUInteger propertyType = [[weakSelf.usedGroup valueForProperty:ALAssetsGroupPropertyType] unsignedIntegerValue];
@@ -149,8 +161,6 @@
             }
         }
     };
-    
-    return assetsEnumerator;
 }
 
 @end
