@@ -97,17 +97,21 @@
     
     return ^(ALAssetsGroup *group, BOOL *stop) {
         if ( group ) {
-            ALAssetsFilter *onlyPhotosFilter = [ALAssetsFilter allPhotos];
-            [group setAssetsFilter:onlyPhotosFilter];
-            
             if ( group.numberOfAssets > 0 ) {
+                [group setAssetsFilter:[ALAssetsFilter allPhotos]];
+                
                 [weakSelf setUsedGroup:group];
                 
                 [group enumerateAssetsWithOptions:NSEnumerationReverse usingBlock:weakSelf.assetsEnumerator];
             }
         }
         else if ( blockGetAllAssets ) {
-            block ( YES, [groups copy] );
+            __block NSMutableArray *groupsMain = groups;
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
+                block ( YES, [groupsMain copy] );
+            });
+            
             groups = nil;
         }
     };
@@ -133,10 +137,10 @@
             *stop = YES;
             
             if ( !blockGetAllAssets ) {
-                UIImage *image = [UIImage imageWithCGImage:[assetResult thumbnail]];
-                image = [UIImage createRoundedRectImage:image size:image.size roundRadius:8];
-
                 dispatch_async(dispatch_get_main_queue(), ^{
+                    UIImage *image = [UIImage imageWithCGImage:[assetResult thumbnail]];
+                    image = [UIImage createRoundedRectImage:image size:image.size roundRadius:8];
+
                     blockLastItem( YES, image );
                 });
             }

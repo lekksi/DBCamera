@@ -73,7 +73,9 @@
     if ( _items.count > 0) {
         __weak DBCollectionViewCell *blockItem = item;
         
-        [[[DBLibraryManager sharedInstance] defaultAssetsLibrary] assetForURL:(NSURL *)_items[indexPath.item]  resultBlock:^(ALAsset *asset) {
+        ALAsset *asset = _items[indexPath.item];
+        
+        [[[DBLibraryManager sharedInstance] defaultAssetsLibrary] assetForURL:[[asset defaultRepresentation] url]  resultBlock:^(ALAsset *asset) {
             UIImage *image = [UIImage imageWithCGImage:[asset aspectRatioThumbnail]];
             [blockItem.itemImage setImage:image];
         } failureBlock:nil];
