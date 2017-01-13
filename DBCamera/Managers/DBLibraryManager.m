@@ -56,16 +56,13 @@
     _lastItemCompletionBlock = blockhandler;
     __weak LastItemCompletionBlock block = _lastItemCompletionBlock;
     
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [[self defaultAssetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos
-                                                   usingBlock:self.assetGroupEnumerator
-                                                 failureBlock:^(NSError *error) {
-                                                     dispatch_async(dispatch_get_main_queue(), ^{
-                                                         block( NO, nil );
-                                                     });
-                                                 }];
-    });
-    
+    [[self defaultAssetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos
+                                               usingBlock:self.assetGroupEnumerator
+                                             failureBlock:^(NSError *error) {
+                                                 dispatch_async(dispatch_get_main_queue(), ^{
+                                                     block( NO, nil );
+                                                 });
+                                             }];
 }
 
 - (void) loadGroupsAssetWithBlock:(GroupsCompletionBlock)blockhandler
@@ -74,15 +71,13 @@
     _groupsCompletionBlock = blockhandler;
     __weak GroupsCompletionBlock block = _groupsCompletionBlock;
     
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [[self defaultAssetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupAll
-                                                   usingBlock:self.assetGroupEnumerator
-                                                 failureBlock:^(NSError *error) {
-                                                     dispatch_async(dispatch_get_main_queue(), ^{
-                                                         block( NO, nil );
-                                                     });
-                                                 }];
-    });
+    [[self defaultAssetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupLibrary|ALAssetsGroupAlbum|ALAssetsGroupSavedPhotos|ALAssetsGroupPhotoStream
+                                               usingBlock:self.assetGroupEnumerator
+                                             failureBlock:^(NSError *error) {
+                                                 dispatch_async(dispatch_get_main_queue(), ^{
+                                                     block( NO, nil );
+                                                 });
+                                             }];
 }
 
 - (ALAssetsLibraryGroupsEnumerationResultsBlock) assetGroupEnumerator
