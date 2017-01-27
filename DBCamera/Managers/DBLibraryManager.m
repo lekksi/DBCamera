@@ -56,7 +56,7 @@
     _lastItemCompletionBlock = blockhandler;
     __weak LastItemCompletionBlock block = _lastItemCompletionBlock;
     
-    [[self defaultAssetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupSavedPhotos
+    [[self defaultAssetsLibrary] enumerateGroupsWithTypes:ALAssetsGroupLibrary|ALAssetsGroupAlbum|ALAssetsGroupSavedPhotos|ALAssetsGroupPhotoStream
                                                usingBlock:self.assetGroupEnumerator
                                              failureBlock:^(NSError *error) {
                                                  dispatch_async(dispatch_get_main_queue(), ^{
@@ -123,7 +123,7 @@
     __weak LastItemCompletionBlock blockLastItem = _lastItemCompletionBlock;
     
     return ^(ALAsset *result, NSUInteger index, BOOL *stop) {
-        if ( result && ((blockGetAllAssets && items.count < 600) || (!blockGetAllAssets && items.count < 1))) {
+        if ( result && ((blockGetAllAssets && items.count < 1000) || (!blockGetAllAssets && items.count < 1))) {
             [items addObject:result];
 
             assetResult = result;
@@ -146,7 +146,7 @@
 
                 NSDictionary *dictionaryGroup = @{
                         @"groupTitle" : groupPropertyName,
-                        @"groupAssets" : [[items reverseObjectEnumerator] allObjects],
+                        @"groupAssets" : items,
                         @"propertyType" : @(propertyType),
                         @"propertyID" : groupPropertyPersistentID
                 };
